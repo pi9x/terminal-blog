@@ -1,0 +1,9 @@
+{
+  "id": 30,
+  "title": "Deploying to Vercel",
+  "date": "2024-10-05",
+  "lastModified": "2024-10-15",
+  "readTime": "4 min read",
+  "tags": ["vercel", "deployment", "nextjs"],
+  "content": "<p>Vercel makes deployment <strong>frictionless</strong>.</p>\n<ul>\n  <li>Preview deployments per PR</li>\n  <li>Environment variables</li>\n  <li>Observability and logs</li>\n</ul>"
+}

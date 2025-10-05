@@ -1,0 +1,8 @@
+{
+  "id": 25,
+  "title": "Error Handling that Helps",
+  "date": "2024-10-18",
+  "readTime": "5 min read",
+  "tags": ["errors", "ux", "logging"],
+  "content": "<p>Good errors are <strong>actionable</strong> and friendly.</p>\n<ul>\n  <li>Tell users what happened</li>\n  <li>Offer next steps</li>\n  <li>Log details for developers</li>\n</ul>"
+}

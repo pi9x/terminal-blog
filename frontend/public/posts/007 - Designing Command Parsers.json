@@ -1,0 +1,8 @@
+{
+  "id": 7,
+  "title": "Designing Command Parsers",
+  "date": "2024-12-10",
+  "readTime": "8 min read",
+  "tags": ["cli", "parsing", "design"],
+  "content": "<p>Command parsers translate user input into <strong>structured intents</strong>.</p>\n<ul>\n  <li>Define grammar and tokens up front</li>\n  <li>Provide helpful errors and suggestions</li>\n  <li>Support aliases and abbreviations</li>\n</ul>\n<p>Robust parsers improve discoverability and trust.</p>"
+}

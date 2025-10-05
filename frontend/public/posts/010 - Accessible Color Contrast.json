@@ -1,0 +1,9 @@
+{
+  "id": 10,
+  "title": "Accessible Color Contrast",
+  "date": "2024-11-28",
+  "lastModified": "2024-12-05",
+  "readTime": "5 min read",
+  "tags": ["a11y", "design", "color"],
+  "content": "<p>Color contrast ensures content is <strong>readable for everyone</strong>.</p>\n<ul>\n  <li>Target WCAG AA/AAA where appropriate</li>\n  <li>Use tools to evaluate contrast</li>\n  <li>Don't rely on color alone</li>\n</ul>"
+}

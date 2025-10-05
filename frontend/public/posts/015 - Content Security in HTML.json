@@ -1,0 +1,9 @@
+{
+  "id": 15,
+  "title": "Content Security in HTML",
+  "date": "2024-11-12",
+  "lastModified": "2024-11-25",
+  "readTime": "6 min read",
+  "tags": ["security", "html", "xss"],
+  "content": "<p>Rendering HTML requires <strong>defense-in-depth</strong>.</p>\n<ul>\n  <li>Sanitize untrusted content</li>\n  <li>Use CSP headers</li>\n  <li>Avoid inline scripts/styles</li>\n</ul>"
+}

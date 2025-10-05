@@ -1,0 +1,8 @@
+{
+  "id": 14,
+  "title": "SSR and Hydration Gotchas",
+  "date": "2024-11-15",
+  "readTime": "7 min read",
+  "tags": ["nextjs", "ssr", "hydration"],
+  "content": "<p>Hydration mismatches cause <strong>unexpected bugs</strong>.</p>\n<ul>\n  <li>Guard DOM usage behind effects</li>\n  <li>Keep markup deterministic</li>\n  <li>Feature-flag client-only pieces</li>\n</ul>"
+}

@@ -1,0 +1,9 @@
+{
+  "id": 1,
+  "title": "Building Terminal Interfaces in React",
+  "date": "2025-01-15",
+  "lastModified": "2025-02-03",
+  "readTime": "5 min read",
+  "tags": ["react", "ui", "terminal"],
+  "content": "<p>Terminal interfaces offer a unique way to interact with web applications. They provide a <strong>distraction-free environment</strong> focused on content and keyboard efficiency.</p>\n\n<p>In this post, we explore how to build terminal-style interfaces using React and modern web technologies. The key is to capture keyboard events effectively and provide clear visual feedback.</p>\n\n<h3>Key considerations:</h3>\n<ul>\n  <li>Keyboard event handling</li>\n  <li>Command parsing and execution</li>\n  <li>History management</li>\n  <li>Visual feedback for user actions</li>\n</ul>\n\n<h3>Terminal UIs are particularly effective for:</h3>\n<ul>\n  <li>Developer tools and documentation</li>\n  <li>Blog platforms focused on technical content</li>\n  <li>Command-line tool demonstrations</li>\n  <li>Minimalist content presentation</li>\n</ul>\n\n<p>The aesthetic appeals to developers and creates a <em>unique brand identity</em> that stands out from traditional blog layouts.</p>"
+}

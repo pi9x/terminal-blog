@@ -1,0 +1,8 @@
+{
+  "id": 23,
+  "title": "Shallow vs Deep Copy in JS",
+  "date": "2024-10-22",
+  "readTime": "4 min read",
+  "tags": ["javascript", "fundamentals"],
+  "content": "<p>Know when copies are <strong>shallow</strong> vs <strong>deep</strong>.</p>\n<ul>\n  <li>Spread vs structuredClone</li>\n  <li>Immutability and pitfalls</li>\n  <li>Performance trade-offs</li>\n</ul>"
+}

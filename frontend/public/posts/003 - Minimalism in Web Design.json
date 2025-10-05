@@ -1,0 +1,9 @@
+{
+  "id": 3,
+  "title": "Minimalism in Web Design",
+  "date": "2025-01-05",
+  "lastModified": "2025-01-20",
+  "readTime": "6 min read",
+  "tags": ["design", "minimalism", "web"],
+  "content": "<p>Minimalist design removes unnecessary elements to focus on what matters: <strong>content and functionality</strong>. This approach has gained popularity as users become overwhelmed by cluttered interfaces.</p>\n\n<h3>Principles of minimalist web design:</h3>\n<ul>\n  <li>Use whitespace effectively</li>\n  <li>Limit color palette (3-5 colors maximum)</li>\n  <li>Choose typography carefully</li>\n  <li>Remove decorative elements</li>\n  <li>Focus on content hierarchy</li>\n</ul>\n\n<h3>Benefits:</h3>\n<ul>\n  <li>Faster load times</li>\n  <li>Better mobile experience</li>\n  <li>Improved focus and readability</li>\n  <li>Easier maintenance</li>\n  <li>Timeless aesthetic</li>\n</ul>\n\n<p>Terminal interfaces represent an <em>extreme form of minimalism</em>, stripping away all visual chrome to present pure content. This creates a focused reading experience that many users find refreshing.</p>\n\n<blockquote>The challenge is balancing minimalism with usability. Too minimal and users get lost; too complex and you lose the benefits.</blockquote>"
+}

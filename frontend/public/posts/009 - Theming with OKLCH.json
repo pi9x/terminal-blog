@@ -1,0 +1,8 @@
+{
+  "id": 9,
+  "title": "Theming with OKLCH",
+  "date": "2024-12-01",
+  "readTime": "5 min read",
+  "tags": ["css", "color", "oklch"],
+  "content": "<p>OKLCH gives perceptually uniform colors. It makes <strong>consistent theming</strong> easier.</p>\n<ul>\n  <li>Use <code>oklch()</code> for dynamic theming</li>\n  <li>Respect contrast ratios</li>\n  <li>Test in light and dark modes</li>\n</ul>"
+}

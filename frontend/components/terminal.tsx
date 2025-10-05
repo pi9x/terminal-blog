@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { blogPosts } from "@/lib/blog-data";
+import { loadBlogPosts, type BlogPost } from "@/lib/blog-data";
 
 type View = "list" | "post" | "help";
 
@@ -15,6 +15,8 @@ export default function Terminal() {
   const [commandInput, setCommandInput] = useState("");
   const [filterText, setFilterText] = useState("");
   const [isFiltering, setIsFiltering] = useState(false);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
   const commandInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tableRowsRef = useRef<HTMLDivElement>(null);
@@ -80,6 +82,23 @@ export default function Terminal() {
       document.removeEventListener("keydown", onKeyDownCapture, true);
     };
   }, [commandMode, isFiltering]);
+
+  // Load posts from static JSON files
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        setLoadingPosts(true);
+        const data = await loadBlogPosts();
+        if (isMounted) setPosts(data);
+      } finally {
+        if (isMounted) setLoadingPosts(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (commandMode) {
@@ -214,8 +233,14 @@ export default function Terminal() {
         setSelectedIndex((prev) => Math.max(0, prev - jump));
       } else if (e.key === "Enter" || e.key === "l" || e.key === "ArrowRight") {
         e.preventDefault();
-        setSelectedPost(filteredPosts[selectedIndex].id - 1);
-        setCurrentView("post");
+        if (!filteredPosts.length) return;
+        const safeIndex = Math.min(selectedIndex, filteredPosts.length - 1);
+        const id = filteredPosts[safeIndex].id;
+        const idxInAll = posts.findIndex((p) => p.id === id);
+        if (idxInAll >= 0) {
+          setSelectedPost(idxInAll);
+          setCurrentView("post");
+        }
       }
     } else if (currentView === "post" || currentView === "help") {
       if (e.key === "Escape" || e.key === "h" || e.key === "ArrowLeft") {
@@ -251,14 +276,14 @@ export default function Terminal() {
   >();
   const contentTextMap = useMemo(() => {
     const m = new Map<number, string>();
-    for (const p of blogPosts) {
+    for (const p of posts) {
       m.set(p.id, htmlToText(p.content));
     }
     return m;
-  }, []);
+  }, [posts]);
 
   const filteredPosts = filterText.trim()
-    ? [...blogPosts]
+    ? [...posts]
         .map((post) => {
           const titleMatch = fuzzyMatch(filterText, post.title);
           const tagsText = post.tags.join(", ");
@@ -289,7 +314,7 @@ export default function Terminal() {
           (
             r,
           ): r is {
-            post: (typeof blogPosts)[number];
+            post: BlogPost;
             score: number;
             titleIdx: number[];
             tagsIdx: number[];
@@ -305,7 +330,7 @@ export default function Terminal() {
           });
           return r.post;
         })
-    : blogPosts;
+    : posts;
 
   function htmlToText(html: string): string {
     return html
@@ -485,8 +510,9 @@ export default function Terminal() {
         </div>
         <div className="flex items-center gap-4 text-xs">
           <span className="text-primary-foreground/70">
-            {filteredPosts.length}{" "}
-            {filteredPosts.length === 1 ? "post" : "posts"}
+            {loadingPosts
+              ? "Loading…"
+              : `${filteredPosts.length} ${filteredPosts.length === 1 ? "post" : "posts"}`}
           </span>
         </div>
       </div>
@@ -495,6 +521,11 @@ export default function Terminal() {
         {currentView === "list" && (
           <div className="h-full flex flex-col">
             <div ref={tableRowsRef} className="flex-1 overflow-y-auto">
+              {!loadingPosts && filteredPosts.length === 0 && (
+                <div className="px-4 py-3 text-sm text-muted-foreground">
+                  No posts found
+                </div>
+              )}
               {filteredPosts.map((post, idx) => (
                 <div
                   key={post.id}
@@ -531,6 +562,12 @@ export default function Terminal() {
                         }
                       >
                         <span>{post.date}</span>
+                        {post.lastModified && (
+                          <>
+                            <span className="mx-2">•</span>
+                            <span>Updated {post.lastModified}</span>
+                          </>
+                        )}
                         <span className="mx-2">•</span>
                         <span>{post.readTime}</span>
                         <span className="mx-2">•</span>
@@ -602,21 +639,27 @@ export default function Terminal() {
           <div ref={contentRef} className="h-full overflow-y-auto px-6 py-4">
             <div className="max-w-5xl">
               <h1 className="text-2xl font-bold text-accent mb-2">
-                {blogPosts[selectedPost].title}
+                {posts[selectedPost].title}
               </h1>
               <div className="flex gap-4 text-sm text-muted-foreground mb-6">
-                <span>{blogPosts[selectedPost].date}</span>
+                <span>{posts[selectedPost].date}</span>
+                {posts[selectedPost].lastModified && (
+                  <>
+                    <span>•</span>
+                    <span>Updated {posts[selectedPost].lastModified}</span>
+                  </>
+                )}
                 <span>•</span>
-                <span>{blogPosts[selectedPost].readTime}</span>
+                <span>{posts[selectedPost].readTime}</span>
                 <span>•</span>
                 <span className="text-info">
-                  {blogPosts[selectedPost].tags.join(", ")}
+                  {posts[selectedPost].tags.join(", ")}
                 </span>
               </div>
               <div
                 className="border-t border-border pt-6 leading-relaxed prose prose-invert prose-sm max-w-none text-sm"
                 dangerouslySetInnerHTML={{
-                  __html: blogPosts[selectedPost].content,
+                  __html: posts[selectedPost].content,
                 }}
               />
             </div>
