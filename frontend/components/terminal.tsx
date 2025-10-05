@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { blogPosts } from "@/lib/blog-data";
 
 type View = "list" | "post" | "help";
@@ -96,13 +96,70 @@ export default function Terminal() {
     }
 
     if (isFiltering) {
+      // Allow exiting filter mode
       if (e.key === "Escape") {
         setIsFiltering(false);
         setFilterText("");
         setTimeout(() => containerRef.current?.focus(), 0);
-      } else if (e.key === "Enter") {
-        setIsFiltering(false);
+        return;
       }
+      // Confirm filter input (do not open post on Enter while filtering)
+      if (e.key === "Enter") {
+        setIsFiltering(false);
+        return;
+      }
+      // While filtering, allow navigation without stealing typing
+      if (currentView === "list") {
+        if (e.key === "j") {
+          // Do not prevent default so 'j' is still typed into the filter
+          setSelectedIndex((prev) =>
+            Math.min(filteredPosts.length - 1, prev + 1),
+          );
+          return;
+        }
+        if (e.key === "k") {
+          // Do not prevent default so 'k' is still typed into the filter
+          setSelectedIndex((prev) => Math.max(0, prev - 1));
+          return;
+        }
+        if (e.key === "ArrowDown") {
+          // Prevent caret movement in the input
+          e.preventDefault();
+          setSelectedIndex((prev) =>
+            Math.min(filteredPosts.length - 1, prev + 1),
+          );
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          // Prevent caret movement in the input
+          e.preventDefault();
+          setSelectedIndex((prev) => Math.max(0, prev - 1));
+          return;
+        }
+        if (e.key === "d" && e.ctrlKey) {
+          e.preventDefault();
+          const jump = getPageJumpCount(1);
+          setSelectedIndex((prev) =>
+            Math.min(filteredPosts.length - 1, prev + jump),
+          );
+          return;
+        }
+        if (e.key === "u" && e.ctrlKey) {
+          e.preventDefault();
+          const jump = getPageJumpCount(-1);
+          setSelectedIndex((prev) => Math.max(0, prev - jump));
+          return;
+        }
+        if (e.key === "g") {
+          setSelectedIndex(0);
+          return;
+        }
+        if (e.key === "G") {
+          setSelectedIndex(filteredPosts.length - 1);
+          return;
+        }
+      }
+      // Let all other keys type into the filter input
       return;
     }
 
@@ -188,24 +245,167 @@ export default function Terminal() {
     }
   };
 
-  const filteredPosts = filterText
-    ? blogPosts.filter(
-        (post) =>
-          post.title.toLowerCase().includes(filterText.toLowerCase()) ||
-          post.tags.some((tag) =>
-            tag.toLowerCase().includes(filterText.toLowerCase()),
-          ),
-      )
+  const matchById = new Map<
+    number,
+    { title: number[]; tags: number[]; content: number[] }
+  >();
+  const contentTextMap = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const p of blogPosts) {
+      m.set(p.id, htmlToText(p.content));
+    }
+    return m;
+  }, []);
+
+  const filteredPosts = filterText.trim()
+    ? [...blogPosts]
+        .map((post) => {
+          const titleMatch = fuzzyMatch(filterText, post.title);
+          const tagsText = post.tags.join(", ");
+          const tagsMatch = fuzzyMatch(filterText, tagsText);
+          const dateMatch = fuzzyMatch(filterText, post.date);
+          const readMatch = fuzzyMatch(filterText, post.readTime);
+          const contentText = contentTextMap.get(post.id) || "";
+          const contentMatch = fuzzyMatch(filterText, contentText);
+
+          const score =
+            (titleMatch?.score || 0) * 3 +
+            (tagsMatch?.score || 0) * 2 +
+            (contentMatch?.score || 0) * 1 +
+            (dateMatch?.score || 0) * 0.5 +
+            (readMatch?.score || 0) * 0.5;
+
+          if (score <= 0) return null;
+
+          return {
+            post,
+            score,
+            titleIdx: titleMatch?.indices || [],
+            tagsIdx: tagsMatch?.indices || [],
+            contentIdx: contentMatch?.indices || [],
+          };
+        })
+        .filter(
+          (
+            r,
+          ): r is {
+            post: (typeof blogPosts)[number];
+            score: number;
+            titleIdx: number[];
+            tagsIdx: number[];
+            contentIdx: number[];
+          } => !!r,
+        )
+        .sort((a, b) => b.score - a.score)
+        .map((r) => {
+          matchById.set(r.post.id, {
+            title: r.titleIdx,
+            tags: r.tagsIdx,
+            content: r.contentIdx,
+          });
+          return r.post;
+        })
     : blogPosts;
 
-  const getPreviewText = (html: string, maxLen = 160): string => {
-    // SSR-safe: strip tags with regex instead of using DOM
-    const text = html
+  function htmlToText(html: string): string {
+    return html
       .replace(/<script[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?<\/style>/gi, "")
-      .replace(/<[^>]+>/g, " ");
-    const clean = text.replace(/\s+/g, " ").trim();
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  const getPreviewText = (html: string, maxLen = 160): string => {
+    const clean = htmlToText(html);
     return clean.length > maxLen ? clean.slice(0, maxLen - 1) + "…" : clean;
+  };
+
+  // Fuzzy match: returns null if query doesn't match text in order
+  function fuzzyMatch(
+    query: string,
+    text: string,
+  ): { score: number; indices: number[] } | null {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const t = text.toLowerCase();
+    let qi = 0;
+    const idx: number[] = [];
+    let last = -2;
+    let streak = 0;
+    let score = 0;
+
+    for (let i = 0; i < t.length && qi < q.length; i++) {
+      if (t[i] === q[qi]) {
+        idx.push(i);
+        if (i === last + 1) {
+          streak += 1;
+        } else {
+          streak = 1;
+        }
+        last = i;
+        score += 1 + streak * 1.5; // reward consecutive chars
+        qi++;
+      }
+    }
+
+    if (qi < q.length) return null;
+
+    // compactness bonus
+    const spread = idx.length ? idx[idx.length - 1] - idx[0] + 1 : 0;
+    score += Math.max(0, 5 - spread * 0.05);
+
+    // word-start bonus
+    idx.forEach((i) => {
+      if (i === 0 || /\W/.test(t[i - 1] || " ")) score += 0.5;
+    });
+
+    return { score, indices: idx };
+  }
+
+  const renderHighlighted = (
+    text: string,
+    indices: number[] | undefined,
+    selected: boolean,
+  ) => {
+    if (!indices || indices.length === 0) return text;
+    const parts: React.ReactNode[] = [];
+    let last = 0;
+    let i = 0;
+
+    while (i < indices.length) {
+      const start = indices[i];
+      let end = start + 1;
+      while (i + 1 < indices.length && indices[i + 1] === end) {
+        i++;
+        end++;
+      }
+
+      if (last < start) {
+        parts.push(text.slice(last, start));
+      }
+
+      parts.push(
+        <span
+          key={start}
+          className={
+            selected
+              ? "bg-accent-foreground/20 text-accent-foreground"
+              : "bg-info/20 text-info"
+          }
+        >
+          {text.slice(start, end)}
+        </span>,
+      );
+
+      last = end;
+      i++;
+    }
+
+    if (last < text.length) {
+      parts.push(text.slice(last));
+    }
+
+    return <>{parts}</>;
   };
 
   const getPageJumpCount = (direction: 1 | -1) => {
@@ -277,7 +477,13 @@ export default function Terminal() {
                       {post.id}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="truncate font-bold">{post.title}</div>
+                      <div className="truncate font-bold">
+                        {renderHighlighted(
+                          post.title,
+                          matchById.get(post.id)?.title,
+                          idx === selectedIndex,
+                        )}
+                      </div>
                       <div
                         className={
                           idx === selectedIndex
@@ -296,7 +502,11 @@ export default function Terminal() {
                               : "text-info"
                           }
                         >
-                          {post.tags.join(", ")}
+                          {renderHighlighted(
+                            post.tags.join(", "),
+                            matchById.get(post.id)?.tags,
+                            idx === selectedIndex,
+                          )}
                         </span>
                       </div>
                       <div
@@ -306,7 +516,40 @@ export default function Terminal() {
                             : "mt-2 text-sm text-muted-foreground"
                         }
                       >
-                        {getPreviewText(post.content)}
+                        {(() => {
+                          const full = htmlToText(post.content);
+                          const indices = matchById.get(post.id)?.content || [];
+                          if (!filterText.trim() || indices.length === 0) {
+                            return full.length > 160
+                              ? full.slice(0, 159) + "…"
+                              : full;
+                          }
+                          const maxLen = 160;
+                          const first = indices[0];
+                          let start = Math.max(
+                            0,
+                            first - Math.floor(maxLen / 2),
+                          );
+                          let end = Math.min(full.length, start + maxLen);
+                          if (end - start < maxLen && start > 0) {
+                            start = Math.max(0, end - maxLen);
+                          }
+                          const slice = full.slice(start, end);
+                          const inRange = indices
+                            .filter((i) => i >= start && i < end)
+                            .map((i) => i - start);
+                          const leading = start > 0;
+                          const trailing = end < full.length;
+                          const finalText = `${leading ? "…" : ""}${slice}${trailing ? "…" : ""}`;
+                          const adjusted = inRange.map(
+                            (i) => i + (leading ? 1 : 0),
+                          );
+                          return renderHighlighted(
+                            finalText,
+                            adjusted,
+                            idx === selectedIndex,
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
