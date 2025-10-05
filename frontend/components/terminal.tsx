@@ -328,6 +328,45 @@ export default function Terminal() {
     const q = query.trim().toLowerCase();
     if (!q) return null;
     const t = text.toLowerCase();
+
+    // Prefer whole-word and contiguous substring matches first
+    const len = q.length;
+    let pos = -1;
+    if (len > 0) {
+      let from = 0;
+      let firstContiguous = -1;
+      while (true) {
+        const found = t.indexOf(q, from);
+        if (found === -1) break;
+        const leftOK = found === 0 || /\W/.test(t[found - 1] || " ");
+        const rightOK =
+          found + len === t.length || /\W/.test(t[found + len] || " ");
+        // Whole word match: both sides are boundaries
+        if (leftOK && rightOK) {
+          pos = found;
+          break;
+        }
+        if (firstContiguous === -1) firstContiguous = found;
+        from = found + 1;
+      }
+      // If no whole word match found, use any contiguous substring match
+      if (pos === -1 && firstContiguous !== -1) pos = firstContiguous;
+    }
+
+    if (pos !== -1) {
+      const indices = Array.from({ length: len }, (_, i) => pos + i);
+      // High base score for contiguous matches; extra for whole-word boundaries
+      let score = 50;
+      const leftOK = pos === 0 || /\W/.test(t[pos - 1] || " ");
+      const rightOK = pos + len === t.length || /\W/.test(t[pos + len] || " ");
+      if (leftOK) score += 10;
+      if (rightOK) score += 10;
+      // Perfect compactness bonus
+      score += 10;
+      return { score, indices };
+    }
+
+    // Fallback: subsequence match with bonuses for consecutive characters and word-starts
     let qi = 0;
     const idx: number[] = [];
     let last = -2;
