@@ -19,6 +19,7 @@ export default function Terminal() {
   const containerRef = useRef<HTMLDivElement>(null);
   const tableRowsRef = useRef<HTMLDivElement>(null);
   const selectedRowRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (commandMode || isFiltering) {
@@ -48,11 +49,44 @@ export default function Terminal() {
     }
   }, [selectedIndex, currentView]);
 
+  // Keep Terminal focused for keyboard navigation without stealing focus from inputs
+  useEffect(() => {
+    const focusContainer = () => {
+      // Defer to end of event loop to avoid interfering with other focus flows
+      setTimeout(() => {
+        containerRef.current?.focus();
+      }, 0);
+    };
+
+    const isEditableTarget = (el: EventTarget | null) => {
+      const node = el as HTMLElement | null;
+      if (!node) return false;
+      if (node.isContentEditable) return true;
+      return !!node.closest(
+        'input, textarea, select, [contenteditable], [contenteditable=""], [contenteditable="true"]',
+      );
+    };
+
+    const onKeyDownCapture = (e: KeyboardEvent) => {
+      if (commandMode || isFiltering) return;
+      if (isEditableTarget(e.target)) return;
+      if (document.activeElement !== containerRef.current) {
+        focusContainer();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDownCapture, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDownCapture, true);
+    };
+  }, [commandMode, isFiltering]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (commandMode) {
       if (e.key === "Escape") {
         setCommandMode(false);
         setCommandInput("");
+        setTimeout(() => containerRef.current?.focus(), 0);
       } else if (e.key === "Enter") {
         executeCommand(commandInput);
         setCommandMode(false);
@@ -65,6 +99,7 @@ export default function Terminal() {
       if (e.key === "Escape") {
         setIsFiltering(false);
         setFilterText("");
+        setTimeout(() => containerRef.current?.focus(), 0);
       } else if (e.key === "Enter") {
         setIsFiltering(false);
       }
@@ -112,27 +147,30 @@ export default function Terminal() {
         setSelectedIndex(filteredPosts.length - 1);
       } else if (e.key === "d" && e.ctrlKey) {
         e.preventDefault();
-        const pageSize = Math.floor(
-          (tableRowsRef.current?.clientHeight || 0) / 40,
-        );
+        const jump = getPageJumpCount(1);
         setSelectedIndex((prev) =>
-          Math.min(filteredPosts.length - 1, prev + pageSize),
+          Math.min(filteredPosts.length - 1, prev + jump),
         );
       } else if (e.key === "u" && e.ctrlKey) {
         e.preventDefault();
-        const pageSize = Math.floor(
-          (tableRowsRef.current?.clientHeight || 0) / 40,
-        );
-        setSelectedIndex((prev) => Math.max(0, prev - pageSize));
+        const jump = getPageJumpCount(-1);
+        setSelectedIndex((prev) => Math.max(0, prev - jump));
       } else if (e.key === "Enter" || e.key === "l" || e.key === "ArrowRight") {
         e.preventDefault();
         setSelectedPost(filteredPosts[selectedIndex].id - 1);
         setCurrentView("post");
       }
-    } else if (currentView === "post") {
+    } else if (currentView === "post" || currentView === "help") {
       if (e.key === "Escape" || e.key === "h" || e.key === "ArrowLeft") {
         setCurrentView("list");
         setSelectedPost(null);
+        setTimeout(() => containerRef.current?.focus(), 0);
+      } else if (e.key === "j" || e.key === "ArrowDown") {
+        e.preventDefault();
+        contentRef.current?.scrollBy({ top: 60, behavior: "auto" });
+      } else if (e.key === "k" || e.key === "ArrowUp") {
+        e.preventDefault();
+        contentRef.current?.scrollBy({ top: -60, behavior: "auto" });
       }
     }
   };
@@ -160,10 +198,39 @@ export default function Terminal() {
       )
     : blogPosts;
 
+  const getPreviewText = (html: string, maxLen = 160): string => {
+    // SSR-safe: strip tags with regex instead of using DOM
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<[^>]+>/g, " ");
+    const clean = text.replace(/\s+/g, " ").trim();
+    return clean.length > maxLen ? clean.slice(0, maxLen - 1) + "…" : clean;
+  };
+
+  const getPageJumpCount = (direction: 1 | -1) => {
+    const container = tableRowsRef.current;
+    if (!container) return 5;
+    const viewport = container.clientHeight;
+    const children = Array.from(container.children) as HTMLElement[];
+    let sum = 0;
+    let count = 0;
+    let i = selectedIndex;
+    while (true) {
+      i += direction;
+      if (i < 0 || i >= children.length) break;
+      const h = children[i].getBoundingClientRect().height || 0;
+      sum += h;
+      count += 1;
+      if (sum >= viewport - 24) break;
+    }
+    return Math.max(1, count);
+  };
+
   return (
     <div
       ref={containerRef}
-      className="h-full max-w-5xl bg-background text-foreground flex flex-col"
+      className="h-full max-w-5xl mx-auto bg-background text-foreground flex flex-col outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0"
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
@@ -188,61 +255,60 @@ export default function Terminal() {
       <div className="flex-1 overflow-hidden">
         {currentView === "list" && (
           <div className="h-full flex flex-col">
-            <div className="bg-secondary px-4 py-2 flex gap-4 text-sm font-bold border-b border-border">
-              <div className="w-12">#</div>
-              <div className="flex-1">TITLE</div>
-              <div className="w-32">DATE</div>
-              <div className="w-24 hidden md:block">READ TIME</div>
-              <div className="w-48 hidden lg:block">TAGS</div>
-            </div>
-
             <div ref={tableRowsRef} className="flex-1 overflow-y-auto">
               {filteredPosts.map((post, idx) => (
                 <div
                   key={post.id}
                   ref={idx === selectedIndex ? selectedRowRef : null}
-                  className={`px-4 py-2 flex gap-4 text-sm border-b border-border/50 ${
+                  className={`px-4 py-3 border-b border-border/50 ${
                     idx === selectedIndex
                       ? "bg-accent text-accent-foreground"
                       : "hover:bg-secondary/50"
                   }`}
                 >
-                  <div
-                    className={
-                      idx === selectedIndex
-                        ? "w-12 text-accent-foreground"
-                        : "w-12 text-muted-foreground"
-                    }
-                  >
-                    {post.id}
-                  </div>
-                  <div className="flex-1 truncate">{post.title}</div>
-                  <div
-                    className={
-                      idx === selectedIndex
-                        ? "w-32 text-accent-foreground"
-                        : "w-32 text-muted-foreground"
-                    }
-                  >
-                    {post.date}
-                  </div>
-                  <div
-                    className={
-                      idx === selectedIndex
-                        ? "w-24 text-accent-foreground hidden md:block"
-                        : "w-24 text-muted-foreground hidden md:block"
-                    }
-                  >
-                    {post.readTime}
-                  </div>
-                  <div
-                    className={
-                      idx === selectedIndex
-                        ? "w-48 truncate text-accent-foreground hidden lg:block"
-                        : "w-48 text-info truncate hidden lg:block"
-                    }
-                  >
-                    {post.tags.join(", ")}
+                  <div className="flex gap-4">
+                    <div
+                      className={
+                        idx === selectedIndex
+                          ? "w-12 shrink-0 text-accent-foreground"
+                          : "w-12 shrink-0 text-muted-foreground"
+                      }
+                    >
+                      {post.id}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-bold">{post.title}</div>
+                      <div
+                        className={
+                          idx === selectedIndex
+                            ? "text-accent-foreground/80 text-xs mt-1"
+                            : "text-muted-foreground text-xs mt-1"
+                        }
+                      >
+                        <span>{post.date}</span>
+                        <span className="mx-2">•</span>
+                        <span>{post.readTime}</span>
+                        <span className="mx-2">•</span>
+                        <span
+                          className={
+                            idx === selectedIndex
+                              ? "text-accent-foreground"
+                              : "text-info"
+                          }
+                        >
+                          {post.tags.join(", ")}
+                        </span>
+                      </div>
+                      <div
+                        className={
+                          idx === selectedIndex
+                            ? "mt-2 text-sm text-accent-foreground/90"
+                            : "mt-2 text-sm text-muted-foreground"
+                        }
+                      >
+                        {getPreviewText(post.content)}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -251,7 +317,7 @@ export default function Terminal() {
         )}
 
         {currentView === "post" && selectedPost !== null && (
-          <div className="h-full overflow-y-auto px-6 py-4">
+          <div ref={contentRef} className="h-full overflow-y-auto px-6 py-4">
             <div className="max-w-5xl">
               <h1 className="text-2xl font-bold text-accent mb-2">
                 {blogPosts[selectedPost].title}
@@ -276,7 +342,7 @@ export default function Terminal() {
         )}
 
         {currentView === "help" && (
-          <div className="h-full overflow-y-auto px-6 py-4">
+          <div ref={contentRef} className="h-full overflow-y-auto px-6 py-4">
             <div className="max-w-5xl space-y-6">
               <div>
                 <h2 className="text-xl font-bold text-accent mb-4">
@@ -353,12 +419,16 @@ export default function Terminal() {
           <span>
             <span className="text-info">?</span> Help
           </span>
-          <span>
-            <span className="text-info">/</span> Filter
-          </span>
-          <span>
-            <span className="text-info">:</span> Command
-          </span>
+          {currentView === "list" && (
+            <span>
+              <span className="text-info">/</span> Filter
+            </span>
+          )}
+          {(currentView === "list" || currentView === "help") && (
+            <span>
+              <span className="text-info">:</span> Command
+            </span>
+          )}
           {currentView === "list" && (
             <>
               <span>
@@ -373,9 +443,14 @@ export default function Terminal() {
             </>
           )}
           {currentView === "post" && (
-            <span>
-              <span className="text-info">Esc</span> Back
-            </span>
+            <>
+              <span>
+                <span className="text-info">j/k</span> Scroll
+              </span>
+              <span>
+                <span className="text-info">Esc</span> Back
+              </span>
+            </>
           )}
         </div>
         <div className="text-muted-foreground">
@@ -384,8 +459,8 @@ export default function Terminal() {
         </div>
       </div>
 
-      {commandMode && (
-        <div className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground px-4 py-2 flex items-center gap-2">
+      {commandMode && currentView !== "post" && (
+        <div className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground px-4 py-2 flex items-center gap-2 max-w-5xl mx-auto">
           <span>:</span>
           <input
             ref={commandInputRef}
@@ -398,8 +473,8 @@ export default function Terminal() {
         </div>
       )}
 
-      {isFiltering && (
-        <div className="absolute bottom-0 left-0 right-0 bg-accent text-accent-foreground px-4 py-2 flex items-center gap-2">
+      {isFiltering && currentView === "list" && (
+        <div className="absolute bottom-0 left-0 right-0 bg-accent text-accent-foreground px-4 py-2 flex items-center gap-2 max-w-5xl mx-auto">
           <span>/</span>
           <input
             ref={commandInputRef}
