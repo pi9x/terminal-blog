@@ -1,8 +1,0 @@
-{
-  "id": 29,
-  "title": "Writing Maintainable Styles",
-  "date": "2024-10-08",
-  "readTime": "5 min read",
-  "tags": ["css", "architecture", "stylelint"],
-  "content": "<p>Maintainable CSS reduces <strong>entropy</strong>.</p>\n<ul>\n  <li>Use utilities or BEM</li>\n  <li>Modularize and lint</li>\n  <li>Document design tokens</li>\n</ul>"
-}

@@ -1,8 +1,0 @@
-{
-  "id": 17,
-  "title": "When to Use Web Workers",
-  "date": "2024-11-08",
-  "readTime": "6 min read",
-  "tags": ["workers", "performance"],
-  "content": "<p>Workers offload heavy tasks from the <strong>main thread</strong>.</p>\n<ul>\n  <li>Parse/format large data</li>\n  <li>Search and indexing</li>\n  <li>Image processing</li>\n</ul>"
-}

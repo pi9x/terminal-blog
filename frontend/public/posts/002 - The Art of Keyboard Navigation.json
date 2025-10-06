@@ -1,8 +1,0 @@
-{
-  "id": 2,
-  "title": "The Art of Keyboard Navigation",
-  "date": "2025-01-10",
-  "readTime": "4 min read",
-  "tags": ["accessibility", "ux", "keyboard"],
-  "content": "<p>Keyboard navigation is essential for <strong>accessibility</strong> and power users. Many users prefer keyboard shortcuts over mouse interactions for speed and efficiency.</p>\n\n<h3>Best practices for keyboard navigation:</h3>\n<ol>\n  <li>Provide clear visual indicators for focused elements</li>\n  <li>Support standard keyboard shortcuts (Ctrl+C, Ctrl+V, etc.)</li>\n  <li>Allow Escape key to cancel or go back</li>\n  <li>Use arrow keys for navigation</li>\n  <li>Implement Tab order logically</li>\n</ol>\n\n<h3>Accessibility benefits:</h3>\n<ul>\n  <li>Screen reader compatibility</li>\n  <li>Motor disability accommodation</li>\n  <li>Faster navigation for power users</li>\n  <li>Reduced reliance on pointing devices</li>\n</ul>\n\n<p>When designing keyboard-first interfaces, always provide <strong>documentation for available shortcuts</strong> and commands. Users should never feel lost or unable to discover functionality.</p>"
-}

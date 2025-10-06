@@ -1,8 +1,0 @@
-{
-  "id": 12,
-  "title": "State Machines for UI Flow",
-  "date": "2024-11-20",
-  "readTime": "7 min read",
-  "tags": ["xstate", "state", "architecture"],
-  "content": "<p>State machines make complex flows <strong>predictable</strong> and testable.</p>\n<ul>\n  <li>Enumerate states and transitions</li>\n  <li>Model side-effects explicitly</li>\n  <li>Visualize your machine</li>\n</ul>"
-}

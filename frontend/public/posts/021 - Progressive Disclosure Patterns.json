@@ -1,8 +1,0 @@
-{
-  "id": 21,
-  "title": "Progressive Disclosure Patterns",
-  "date": "2024-10-28",
-  "readTime": "5 min read",
-  "tags": ["ux", "design", "patterns"],
-  "content": "<p>Reveal complexity <strong>as needed</strong>.</p>\n<ul>\n  <li>Inline expand/collapse</li>\n  <li>Multi-step wizards</li>\n  <li>Hover/tooltips for hints</li>\n</ul>"
-}

@@ -1,8 +1,0 @@
-{
-  "id": 18,
-  "title": "Command Palette UX",
-  "date": "2024-11-05",
-  "readTime": "5 min read",
-  "tags": ["ux", "command", "palette"],
-  "content": "<p>Command palettes improve <strong>discoverability</strong>.</p>\n<ul>\n  <li>Fuzzy search with clear ranking</li>\n  <li>Keyboard-first interactions</li>\n  <li>Context-aware commands</li>\n</ul>"
-}

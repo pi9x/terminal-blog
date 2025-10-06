@@ -1,8 +1,0 @@
-{
-  "id": 4,
-  "title": "Command-Line Interfaces for the Web",
-  "date": "2024-12-28",
-  "readTime": "7 min read",
-  "tags": ["cli", "web", "development"],
-  "content": "<p>Command-line interfaces (CLIs) have been around since the early days of computing. They offer <strong>precision, speed, and composability</strong> that graphical interfaces often lack.</p>\n\n<p>Bringing CLI concepts to the web creates interesting opportunities:</p>\n\n<h3>Interactive documentation:</h3>\n<ul>\n  <li>Users can try commands directly</li>\n  <li>Immediate feedback on syntax</li>\n  <li>Progressive disclosure of features</li>\n</ul>\n\n<h3>Developer tools:</h3>\n<ul>\n  <li>API exploration</li>\n  <li>Configuration management</li>\n  <li>Deployment interfaces</li>\n</ul>\n\n<h3>Content platforms:</h3>\n<ul>\n  <li>Unique reading experience</li>\n  <li>Keyboard-first navigation</li>\n  <li>Nostalgic aesthetic</li>\n</ul>\n\n<h3>Implementation considerations:</h3>\n<ul>\n  <li>Command parsing and validation</li>\n  <li>Auto-completion</li>\n  <li>Command history</li>\n  <li>Error handling</li>\n  <li>Help documentation</li>\n</ul>\n\n<p>The web CLI bridges the gap between traditional terminal applications and modern web technologies, creating a <em>hybrid experience</em> that appeals to technical audiences.</p>"
-}

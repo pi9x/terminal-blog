@@ -1,8 +1,0 @@
-{
-  "id": 13,
-  "title": "Keyboard Testing Strategies",
-  "date": "2024-11-18",
-  "readTime": "6 min read",
-  "tags": ["testing", "accessibility", "jest"],
-  "content": "<p>Automate keyboard testing to prevent <strong>regressions</strong>.</p>\n<ul>\n  <li>Simulate key events in tests</li>\n  <li>Assert focus management</li>\n  <li>Snapshot help/shortcut overlays</li>\n</ul>"
-}

@@ -1,8 +1,0 @@
-{
-  "id": 16,
-  "title": "Virtualized Lists vs Simplicity",
-  "date": "2024-11-10",
-  "readTime": "5 min read",
-  "tags": ["performance", "lists"],
-  "content": "<p>Virtualization improves performance but adds <strong>complexity</strong>.</p>\n<ul>\n  <li>Measure list size and costs</li>\n  <li>Prefer simple lists when possible</li>\n  <li>Optimize rendering hot paths</li>\n</ul>"
-}

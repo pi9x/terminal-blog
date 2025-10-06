@@ -1,8 +1,0 @@
-{
-  "id": 27,
-  "title": "Dark Mode Done Right",
-  "date": "2024-10-12",
-  "readTime": "4 min read",
-  "tags": ["dark-mode", "design", "css"],
-  "content": "<p>Dark mode should be <strong>comfortable</strong> and readable.</p>\n<ul>\n  <li>Choose pleasant contrast levels</li>\n  <li>Handle images and charts</li>\n  <li>Respect system preference</li>\n</ul>"
-}

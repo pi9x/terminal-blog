@@ -1,9 +1,0 @@
-{
-  "id": 5,
-  "title": "Typography in Monospace",
-  "date": "2024-12-20",
-  "lastModified": "2025-01-02",
-  "readTime": "5 min read",
-  "tags": ["typography", "design", "fonts"],
-  "content": "<p>Monospace fonts are essential for terminal interfaces and code display. Each character occupies the same width, creating <strong>perfect alignment</strong> and a distinctive aesthetic.</p>\n\n<h3>Popular monospace fonts:</h3>\n<ul>\n  <li><code>Fira Code</code> (with ligatures)</li>\n  <li><code>JetBrains Mono</code></li>\n  <li><code>Source Code Pro</code></li>\n  <li><code>IBM Plex Mono</code></li>\n  <li><code>Geist Mono</code></li>\n</ul>\n\n<h3>Advantages of monospace:</h3>\n<ul>\n  <li>Perfect alignment for tables and ASCII art</li>\n  <li>Easier to scan code</li>\n  <li>Distinctive technical aesthetic</li>\n  <li>Consistent character spacing</li>\n</ul>\n\n<h3>When using monospace for body text, consider:</h3>\n<ul>\n  <li>Slightly larger font sizes (16px minimum)</li>\n  <li>Increased line height (1.6-1.8)</li>\n  <li>Adequate letter spacing</li>\n  <li>Sufficient contrast</li>\n</ul>\n\n<p>Monospace typography creates a <em>unique reading experience</em> that signals technical content and appeals to developer audiences. It's not suitable for all contexts, but when used appropriately, it creates a strong visual identity.</p>"
-}

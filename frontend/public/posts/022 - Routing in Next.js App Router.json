@@ -1,8 +1,0 @@
-{
-  "id": 22,
-  "title": "Routing in Next.js App Router",
-  "date": "2024-10-25",
-  "readTime": "7 min read",
-  "tags": ["nextjs", "routing", "app-router"],
-  "content": "<p>The App Router simplifies <strong>layout and data</strong>.</p>\n<ul>\n  <li>Nested layouts and parallel routes</li>\n  <li>Streaming and Suspense</li>\n  <li>Server actions and caching</li>\n</ul>"
-}

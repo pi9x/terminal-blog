@@ -1,8 +1,0 @@
-{
-  "id": 24,
-  "title": "Form UX Without Mouse",
-  "date": "2024-10-20",
-  "readTime": "5 min read",
-  "tags": ["a11y", "forms", "keyboard"],
-  "content": "<p>Design forms for <strong>keyboard-only</strong> users.</p>\n<ul>\n  <li>Logical tab order</li>\n  <li>Visible focus styles</li>\n  <li>Clear error recovery</li>\n</ul>"
-}

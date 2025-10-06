@@ -1,8 +1,0 @@
-{
-  "id": 8,
-  "title": "Building a Help System",
-  "date": "2024-12-05",
-  "readTime": "4 min read",
-  "tags": ["docs", "ux"],
-  "content": "<p>A great help system surfaces <strong>contextual guidance</strong> without getting in the way.</p>\n<ul>\n  <li>Inline hints and cheat-sheets</li>\n  <li>Searchable commands</li>\n  <li>Link to deeper docs</li>\n</ul>"
-}

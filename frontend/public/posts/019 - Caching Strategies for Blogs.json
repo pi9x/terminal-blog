@@ -1,8 +1,0 @@
-{
-  "id": 19,
-  "title": "Caching Strategies for Blogs",
-  "date": "2024-11-02",
-  "readTime": "6 min read",
-  "tags": ["caching", "cdn", "stale-while-revalidate"],
-  "content": "<p>Cache wisely to balance <strong>freshness and performance</strong>.</p>\n<ul>\n  <li>Leverage CDN edge caching</li>\n  <li>Use SWR patterns</li>\n  <li>Invalidate on content changes</li>\n</ul>"
-}

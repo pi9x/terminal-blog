@@ -1,8 +1,0 @@
-{
-  "id": 26,
-  "title": "Monitoring Frontend Performance",
-  "date": "2024-10-15",
-  "readTime": "6 min read",
-  "tags": ["performance", "metrics", "web-vitals"],
-  "content": "<p>Track performance with <strong>field data</strong>.</p>\n<ul>\n  <li>Largest Contentful Paint</li>\n  <li>Interaction to Next Paint</li>\n  <li>Cumulative Layout Shift</li>\n</ul>"
-}
