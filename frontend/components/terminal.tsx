@@ -15,6 +15,7 @@ export default function Terminal() {
   const [commandInput, setCommandInput] = useState("");
   const [filterText, setFilterText] = useState("");
   const [isFiltering, setIsFiltering] = useState(false);
+  const [routeReady, setRouteReady] = useState(false);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const commandInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +100,76 @@ export default function Terminal() {
       isMounted = false;
     };
   }, []);
+
+  // Sync app state to URL hash so posts can be shared directly (after initial route applied)
+  useEffect(() => {
+    if (!posts.length || !routeReady) return;
+    let desired = "#/";
+    if (currentView === "help") {
+      desired = "#/help";
+    } else if (currentView === "post" && selectedPost !== null) {
+      const id = posts[selectedPost]?.id;
+      if (id !== undefined) {
+        desired = `#/post/${id}`;
+      }
+    }
+    if (window.location.hash !== desired) {
+      // Push a new history entry for navigations
+      window.location.hash = desired;
+    }
+  }, [currentView, selectedPost, posts]);
+
+  // Initialize view from URL hash and keep state in sync on back/forward
+  useEffect(() => {
+    if (!posts.length) return;
+
+    const parseHash = () => {
+      const raw = window.location.hash.replace(/^#/, "");
+      const parts = raw.split("/").filter(Boolean);
+      if (parts.length === 0) return { view: "list" as View } as const;
+      if (parts[0] === "help") return { view: "help" as View } as const;
+      if (parts[0] === "post" && parts[1]) {
+        const n = Number(parts[1]);
+        if (!Number.isNaN(n)) return { view: "post" as View, id: n } as const;
+      }
+      return { view: "list" as View } as const;
+    };
+
+    const applyFromHash = () => {
+      const route = parseHash();
+      // Reset filter UI when navigating via URL
+      setIsFiltering(false);
+      setFilterText("");
+
+      if (route.view === "help") {
+        setCurrentView("help");
+        setSelectedPost(null);
+        return;
+      }
+      if (route.view === "post" && route.id !== undefined) {
+        const idx = posts.findIndex((p) => p.id === route.id);
+        if (idx >= 0) {
+          setSelectedPost(idx);
+          setCurrentView("post");
+          setSelectedIndex(idx);
+          return;
+        }
+      }
+      // Default to list
+      setCurrentView("list");
+      setSelectedPost(null);
+    };
+
+    // Apply route on mount and when posts become available
+    applyFromHash();
+    setRouteReady(true);
+
+    // Listen to hash changes (back/forward/share links)
+    window.addEventListener("hashchange", applyFromHash);
+    return () => {
+      window.removeEventListener("hashchange", applyFromHash);
+    };
+  }, [posts]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (commandMode) {
