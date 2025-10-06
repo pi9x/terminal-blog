@@ -44,10 +44,14 @@ export default function Terminal() {
       const containerTop = containerElement.scrollTop;
       const containerBottom = containerTop + containerElement.clientHeight;
 
-      if (rowTop < containerTop) {
-        containerElement.scrollTop = rowTop;
-      } else if (rowBottom > containerBottom) {
-        containerElement.scrollTop = rowBottom - containerElement.clientHeight;
+      const buffer = 30;
+      if (rowTop < containerTop + buffer) {
+        containerElement.scrollTop = Math.max(0, rowTop - buffer);
+      } else if (rowBottom > containerBottom - buffer) {
+        containerElement.scrollTop = Math.max(
+          0,
+          rowBottom - containerElement.clientHeight + buffer,
+        );
       }
     }
   }, [selectedIndex, currentView]);
