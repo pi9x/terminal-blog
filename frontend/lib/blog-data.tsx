@@ -17,7 +17,16 @@ export async function loadBlogPosts(): Promise<BlogPost[]> {
   try {
     // Expect public/posts/index.json to be an array of filenames, e.g.:
     // ["001 - Building Terminal Interfaces in React.json", ...]
-    const res = await fetch("/posts/index.json", { cache: "no-store" });
+    const baseFromEnv =
+      (typeof process !== "undefined" && process.env.NEXT_PUBLIC_POSTS_BASE) ||
+      "";
+    const postsBase =
+      baseFromEnv && baseFromEnv.trim().length > 0
+        ? baseFromEnv.replace(/\/+$/, "")
+        : typeof window !== "undefined"
+          ? `${window.location.origin}/posts`
+          : "/posts";
+    const res = await fetch(`${postsBase}/index.json`);
     if (!res.ok) {
       return [];
     }
@@ -26,7 +35,7 @@ export async function loadBlogPosts(): Promise<BlogPost[]> {
     const posts: BlogPost[] = [];
     for (const file of files) {
       try {
-        const r = await fetch(`/posts/${file}`, { cache: "no-store" });
+        const r = await fetch(`${postsBase}/${encodeURIComponent(file)}`);
         if (!r.ok) continue;
         const p = (await r.json()) as BlogPost;
         if (!p.id) p.id = extractId(file);

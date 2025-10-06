@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const assetPrefix = process.env.NEXT_PUBLIC_ASSET_PREFIX || "";
+
 const nextConfig = {
+  output: "export",
+  trailingSlash: true,
+  ...(basePath ? { basePath } : {}),
+  ...(assetPrefix ? { assetPrefix } : {}),
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -9,6 +16,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;
