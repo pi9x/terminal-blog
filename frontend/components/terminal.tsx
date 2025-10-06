@@ -353,55 +353,71 @@ export default function Terminal() {
     return m;
   }, [posts]);
 
-  const filteredPosts = filterText.trim()
-    ? [...posts]
-        .map((post) => {
-          const titleMatch = fuzzyMatch(filterText, post.title);
-          const tagsText = post.tags.join(", ");
-          const tagsMatch = fuzzyMatch(filterText, tagsText);
-          const dateMatch = fuzzyMatch(filterText, post.date);
-          const readMatch = fuzzyMatch(filterText, post.readTime);
-          const contentText = contentTextMap.get(post.id) || "";
-          const contentMatch = fuzzyMatch(filterText, contentText);
+  const filteredPosts = (() => {
+    const raw = filterText.trim();
+    // Parse scoped filters: title:, tags:, content:
+    const m = raw.match(/^(title|tags?|content)\s*:\s*(.*)$/i);
+    const scope = m ? m[1].toLowerCase() : null;
+    const query = m ? m[2].trim() : raw;
 
-          const score =
-            (titleMatch?.score || 0) * 3 +
-            (tagsMatch?.score || 0) * 2 +
-            (contentMatch?.score || 0) * 1 +
-            (dateMatch?.score || 0) * 0.5 +
-            (readMatch?.score || 0) * 0.5;
+    if (!query) return posts;
 
-          if (score <= 0) return null;
+    return [...posts]
+      .map((post) => {
+        const tagsText = post.tags.join(", ");
+        const contentText = contentTextMap.get(post.id) || "";
 
-          return {
-            post,
-            score,
-            titleIdx: titleMatch?.indices || [],
-            tagsIdx: tagsMatch?.indices || [],
-            contentIdx: contentMatch?.indices || [],
-          };
-        })
-        .filter(
-          (
-            r,
-          ): r is {
-            post: BlogPost;
-            score: number;
-            titleIdx: number[];
-            tagsIdx: number[];
-            contentIdx: number[];
-          } => !!r,
-        )
-        .sort((a, b) => b.score - a.score)
-        .map((r) => {
-          matchById.set(r.post.id, {
-            title: r.titleIdx,
-            tags: r.tagsIdx,
-            content: r.contentIdx,
-          });
-          return r.post;
-        })
-    : posts;
+        const titleMatch =
+          !scope || scope === "title" ? fuzzyMatch(query, post.title) : null;
+        const tagsMatch =
+          !scope || scope === "tag" || scope === "tags"
+            ? fuzzyMatch(query, tagsText)
+            : null;
+        const contentMatch =
+          !scope || scope === "content" ? fuzzyMatch(query, contentText) : null;
+
+        // Only include date/read time in unscoped searches
+        const dateMatch = !scope ? fuzzyMatch(query, post.date) : null;
+        const readMatch = !scope ? fuzzyMatch(query, post.readTime) : null;
+
+        const score =
+          (titleMatch?.score || 0) * 3 +
+          (tagsMatch?.score || 0) * 2 +
+          (contentMatch?.score || 0) * 1 +
+          (dateMatch?.score || 0) * 0.5 +
+          (readMatch?.score || 0) * 0.5;
+
+        if (score <= 0) return null;
+
+        return {
+          post,
+          score,
+          titleIdx: titleMatch?.indices || [],
+          tagsIdx: tagsMatch?.indices || [],
+          contentIdx: contentMatch?.indices || [],
+        };
+      })
+      .filter(
+        (
+          r,
+        ): r is {
+          post: BlogPost;
+          score: number;
+          titleIdx: number[];
+          tagsIdx: number[];
+          contentIdx: number[];
+        } => !!r,
+      )
+      .sort((a, b) => b.score - a.score)
+      .map((r) => {
+        matchById.set(r.post.id, {
+          title: r.titleIdx,
+          tags: r.tagsIdx,
+          content: r.contentIdx,
+        });
+        return r.post;
+      });
+  })();
 
   function htmlToText(html: string): string {
     return html
@@ -802,6 +818,31 @@ export default function Terminal() {
                   <div className="grid grid-cols-[120px_1fr] gap-4">
                     <span className="text-info">:quit / :q</span>
                     <span>Return to list</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-accent mb-4">
+                  FILTER SYNTAX
+                </h2>
+                <div className="space-y-2 text-sm">
+                  <div className="grid grid-cols-[180px_1fr] gap-4">
+                    <span className="text-info">/ title: keywords</span>
+                    <span>Search only in title</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-4">
+                    <span className="text-info">/ tags: keywords</span>
+                    <span>Search only in tags</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-4">
+                    <span className="text-info">/ content: keywords</span>
+                    <span>Search only in full content</span>
+                  </div>
+                  <div className="grid grid-cols-[180px_1fr] gap-4">
+                    <span className="text-info">/ keywords</span>
+                    <span>
+                      No scope prefix searches title, tags, and content
+                    </span>
                   </div>
                 </div>
               </div>
