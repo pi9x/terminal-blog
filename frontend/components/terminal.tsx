@@ -88,6 +88,40 @@ export default function Terminal() {
     };
   }, [commandMode, isFiltering]);
 
+  // Auto-focus on initial mount and when window/tab regains focus
+  useEffect(() => {
+    const focusContainer = () => {
+      // Defer to end of event loop to avoid interfering with other focus flows
+      setTimeout(() => {
+        containerRef.current?.focus();
+      }, 0);
+    };
+
+    // Focus on initial load
+    focusContainer();
+
+    // Focus when the window gains focus or tab becomes visible
+    const onWindowFocus = () => {
+      if (!commandMode && !isFiltering) focusContainer();
+    };
+    const onVisibilityChange = () => {
+      if (
+        document.visibilityState === "visible" &&
+        !commandMode &&
+        !isFiltering
+      ) {
+        focusContainer();
+      }
+    };
+
+    window.addEventListener("focus", onWindowFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("focus", onWindowFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [commandMode, isFiltering]);
+
   // Load posts from static JSON files
   useEffect(() => {
     let isMounted = true;
@@ -615,7 +649,7 @@ export default function Terminal() {
           <span className="text-primary-foreground/70">›</span>
           <span>
             {currentView === "list" && "Posts"}
-            {currentView === "post" && filteredPosts.length > 0 &&`${filteredPosts[selectedPost ?? 0].title}`}
+            {currentView === "post" && filteredPosts.length > 0 && `${filteredPosts[selectedPost ?? 0].title}`}
             {currentView === "help" && "Help"}
           </span>
         </div>
