@@ -3,7 +3,8 @@
 import type React from "react";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { loadBlogPosts, type BlogPost } from "@/lib/blog-data";
+import { loadBlogPosts } from "@/lib/blog-data";
+import type { BlogPost } from "@/lib/blog-data";
 
 type View = "list" | "post" | "help";
 
@@ -422,16 +423,14 @@ export default function Terminal() {
         const contentMatch =
           !scope || scope === "content" ? fuzzyMatch(query, contentText) : null;
 
-        // Only include date/read time in unscoped searches
+        // Only include date in unscoped searches
         const dateMatch = !scope ? fuzzyMatch(query, post.date) : null;
-        const readMatch = !scope ? fuzzyMatch(query, post.readTime) : null;
 
         const score =
           (titleMatch?.score || 0) * 3 +
           (tagsMatch?.score || 0) * 2 +
           (contentMatch?.score || 0) * 1 +
-          (dateMatch?.score || 0) * 0.5 +
-          (readMatch?.score || 0) * 0.5;
+          (dateMatch?.score || 0) * 0.5;
 
         if (score <= 0) return null;
 
@@ -644,14 +643,14 @@ export default function Terminal() {
       tabIndex={0}
     >
       <div className="bg-primary text-primary-foreground px-4 py-1 flex justify-between items-center text-sm">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <span className="font-bold">TUI BLOG</span>
           <span className="text-primary-foreground/70">›</span>
-          <span>
+          <span className="truncate max-w-[60vw] sm:max-w-none">
             {currentView === "list" && "Posts"}
             {currentView === "post" &&
               filteredPosts.length > 0 &&
-              `${filteredPosts[selectedPost ?? 0].title}`}
+              `Post ${filteredPosts[selectedPost ?? 0].id}`}
             {currentView === "help" && "Help"}
           </span>
         </div>
@@ -721,8 +720,7 @@ export default function Terminal() {
                             <span>Updated {post.lastModified}</span>
                           </>
                         )}
-                        <span className="mx-2">•</span>
-                        <span>{post.readTime}</span>
+
                         <span className="mx-2">•</span>
                         <span
                           className={
@@ -794,7 +792,7 @@ export default function Terminal() {
               <h1 className="text-2xl font-bold text-accent mb-2">
                 {posts[selectedPost].title}
               </h1>
-              <div className="flex gap-4 text-sm text-muted-foreground mb-6">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-muted-foreground mb-6">
                 <span>{posts[selectedPost].date}</span>
                 {posts[selectedPost].lastModified && (
                   <>
@@ -802,8 +800,7 @@ export default function Terminal() {
                     <span>Updated {posts[selectedPost].lastModified}</span>
                   </>
                 )}
-                <span>•</span>
-                <span>{posts[selectedPost].readTime}</span>
+
                 <span>•</span>
                 <span className="text-info">
                   {posts[selectedPost].tags.join(", ")}

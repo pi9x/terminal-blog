@@ -3,7 +3,7 @@ export type BlogPost = {
   title: string;
   date: string;
   lastModified?: string;
-  readTime: string;
+
   tags: string[];
   content: string;
 };
