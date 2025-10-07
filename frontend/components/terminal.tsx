@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useLayoutEffect } from "react";
 import { loadBlogPosts } from "@/lib/blog-data";
 import type { BlogPost } from "@/lib/blog-data";
 
@@ -20,14 +20,28 @@ export default function Terminal() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const commandInputRef = useRef<HTMLInputElement>(null);
+  const filterInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tableRowsRef = useRef<HTMLDivElement>(null);
   const selectedRowRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const pendingFocusRef = useRef<number | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // Focus the appropriate input on mode change and blur container to avoid stealing focus
     if (commandMode || isFiltering) {
+      // Cancel any pending container focus so it doesn't steal focus from inputs
+      if (pendingFocusRef.current !== null) {
+        clearTimeout(pendingFocusRef.current);
+        pendingFocusRef.current = null;
+      }
+    }
+    if (commandMode) {
+      containerRef.current?.blur();
       commandInputRef.current?.focus();
+    } else if (isFiltering) {
+      containerRef.current?.blur();
+      filterInputRef.current?.focus();
     }
   }, [commandMode, isFiltering]);
 
@@ -61,8 +75,13 @@ export default function Terminal() {
   useEffect(() => {
     const focusContainer = () => {
       // Defer to end of event loop to avoid interfering with other focus flows
-      setTimeout(() => {
-        containerRef.current?.focus();
+      if (pendingFocusRef.current !== null) {
+        clearTimeout(pendingFocusRef.current);
+      }
+      pendingFocusRef.current = window.setTimeout(() => {
+        if (!commandMode && !isFiltering) {
+          containerRef.current?.focus();
+        }
       }, 0);
     };
 
@@ -77,6 +96,19 @@ export default function Terminal() {
 
     const onKeyDownCapture = (e: KeyboardEvent) => {
       if (commandMode || isFiltering) return;
+      const k = e.key;
+      // Do not refocus container when initiating filter/command
+      if (
+        (k === "/" && currentView === "list") ||
+        (k === ":" && currentView !== "post")
+      ) {
+        // Cancel any queued container focus when entering filter/command mode
+        if (pendingFocusRef.current !== null) {
+          clearTimeout(pendingFocusRef.current);
+          pendingFocusRef.current = null;
+        }
+        return;
+      }
       if (isEditableTarget(e.target)) return;
       if (document.activeElement !== containerRef.current) {
         focusContainer();
@@ -86,20 +118,31 @@ export default function Terminal() {
     document.addEventListener("keydown", onKeyDownCapture, true);
     return () => {
       document.removeEventListener("keydown", onKeyDownCapture, true);
+      if (pendingFocusRef.current !== null) {
+        clearTimeout(pendingFocusRef.current);
+        pendingFocusRef.current = null;
+      }
     };
-  }, [commandMode, isFiltering]);
+  }, [commandMode, isFiltering, currentView]);
 
   // Auto-focus on initial mount and when window/tab regains focus
   useEffect(() => {
     const focusContainer = () => {
       // Defer to end of event loop to avoid interfering with other focus flows
-      setTimeout(() => {
-        containerRef.current?.focus();
+      if (pendingFocusRef.current !== null) {
+        clearTimeout(pendingFocusRef.current);
+      }
+      pendingFocusRef.current = window.setTimeout(() => {
+        if (!commandMode && !isFiltering) {
+          containerRef.current?.focus();
+        }
       }, 0);
     };
 
-    // Focus on initial load
-    focusContainer();
+    // Focus on initial load or when modes are inactive
+    if (!commandMode && !isFiltering) {
+      focusContainer();
+    }
 
     // Focus when the window gains focus or tab becomes visible
     const onWindowFocus = () => {
@@ -120,6 +163,10 @@ export default function Terminal() {
     return () => {
       window.removeEventListener("focus", onWindowFocus);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (pendingFocusRef.current !== null) {
+        clearTimeout(pendingFocusRef.current);
+        pendingFocusRef.current = null;
+      }
     };
   }, [commandMode, isFiltering]);
 
@@ -211,6 +258,27 @@ export default function Terminal() {
   }, [posts]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // If a text input is focused, let typing go through, but still allow a few control keys
+    const t = e.target as HTMLElement | null;
+    if (
+      t &&
+      (t.isContentEditable ||
+        t.closest(
+          'input, textarea, select, [contenteditable], [contenteditable=""], [contenteditable="true"]',
+        ))
+    ) {
+      const k = e.key;
+      const allow =
+        k === "Escape" ||
+        k === "Enter" ||
+        k === "ArrowUp" ||
+        k === "ArrowDown" ||
+        (k === "d" && e.ctrlKey) ||
+        (k === "u" && e.ctrlKey) ||
+        k === "g" ||
+        k === "G";
+      if (!allow) return;
+    }
     if (commandMode) {
       if (e.key === "Escape") {
         setCommandMode(false);
@@ -294,17 +362,21 @@ export default function Terminal() {
 
     if (e.key === ":" && currentView !== "post") {
       e.preventDefault();
+      containerRef.current?.blur();
       setCommandMode(true);
+      setTimeout(() => commandInputRef.current?.focus(), 0);
       return;
     }
 
     if (e.key === "/" && currentView === "list") {
       e.preventDefault();
+      containerRef.current?.blur();
       setIsFiltering(true);
+      setTimeout(() => filterInputRef.current?.focus(), 0);
       return;
     }
 
-    if (e.key === "?" || e.key === "h") {
+    if (e.key === "?") {
       e.preventDefault();
       setCurrentView("help");
       return;
@@ -967,6 +1039,25 @@ export default function Terminal() {
             type="text"
             value={commandInput}
             onChange={(e) => setCommandInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                e.stopPropagation();
+                setCommandMode(false);
+                setCommandInput("");
+                setTimeout(() => containerRef.current?.focus(), 0);
+              } else if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                executeCommand(commandInput);
+                setCommandMode(false);
+                setCommandInput("");
+                setTimeout(() => containerRef.current?.focus(), 0);
+              } else {
+                // prevent container hotkeys from stealing input while typing
+                e.stopPropagation();
+              }
+            }}
             className="flex-1 bg-transparent outline-none border-none"
             autoFocus
           />
@@ -977,10 +1068,27 @@ export default function Terminal() {
         <div className="absolute bottom-0 left-0 right-0 bg-accent text-accent-foreground px-4 py-2 flex items-center gap-2 max-w-5xl mx-auto">
           <span>/</span>
           <input
-            ref={commandInputRef}
+            ref={filterInputRef}
             type="text"
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsFiltering(false);
+                setFilterText("");
+                setTimeout(() => containerRef.current?.focus(), 0);
+              } else if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsFiltering(false);
+                setTimeout(() => containerRef.current?.focus(), 0);
+              } else {
+                // prevent container hotkeys from stealing input while typing
+                e.stopPropagation();
+              }
+            }}
             className="flex-1 bg-transparent outline-none border-none"
             placeholder="Filter posts..."
             autoFocus
