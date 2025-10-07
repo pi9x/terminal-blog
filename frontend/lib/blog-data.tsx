@@ -33,17 +33,32 @@ export async function loadBlogPosts(): Promise<BlogPost[]> {
     const files: string[] = await res.json();
 
     const posts: BlogPost[] = [];
-    for (const file of files) {
-      try {
-        const r = await fetch(`${postsBase}/${encodeURIComponent(file)}`);
-        if (!r.ok) continue;
-        const p = (await r.json()) as BlogPost;
-        if (!p.id) p.id = extractId(file);
-        posts.push(p);
-      } catch {
-        // skip malformed or unreadable entries
-      }
-    }
+    const limit =
+      Number(
+        (typeof process !== "undefined" &&
+          process.env.NEXT_PUBLIC_POSTS_CONCURRENCY) ||
+          "",
+      ) || 8;
+    let cursor = 0;
+
+    await Promise.all(
+      Array.from({ length: Math.min(limit, files.length) }, async () => {
+        for (;;) {
+          const idx = cursor++;
+          if (idx >= files.length) break;
+          const file = files[idx];
+          try {
+            const r = await fetch(`${postsBase}/${encodeURIComponent(file)}`);
+            if (!r.ok) continue;
+            const p = (await r.json()) as BlogPost;
+            if (!p.id) p.id = extractId(file);
+            posts.push(p);
+          } catch {
+            // skip malformed or unreadable entries
+          }
+        }
+      }),
+    );
 
     // Sort by date desc, then by id asc
     posts.sort((a, b) => {

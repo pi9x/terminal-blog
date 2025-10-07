@@ -48,6 +48,7 @@ jobs:
       - name: Build static export (out/)
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_POSTS_CONCURRENCY: 50
           # Optionally set NEXT_PUBLIC_POSTS_BASE if your posts live on another domain:
           # NEXT_PUBLIC_POSTS_BASE: ${{ secrets.NEXT_PUBLIC_POSTS_BASE }}
         run: npm run build
