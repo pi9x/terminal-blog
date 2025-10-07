@@ -60,10 +60,14 @@ export async function loadBlogPosts(): Promise<BlogPost[]> {
       }),
     );
 
-    // Sort by date desc, then by id asc
+    // Sort by lastModified (if present) desc, else by date desc; then by id asc
     posts.sort((a, b) => {
-      if (a.date !== b.date) {
-        return a.date > b.date ? -1 : 1;
+      const aUpdated =
+        a.lastModified && a.lastModified.trim() ? a.lastModified : a.date;
+      const bUpdated =
+        b.lastModified && b.lastModified.trim() ? b.lastModified : b.date;
+      if (aUpdated !== bUpdated) {
+        return aUpdated > bUpdated ? -1 : 1;
       }
       return (a.id ?? 0) - (b.id ?? 0);
     });

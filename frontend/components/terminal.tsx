@@ -364,7 +364,15 @@ export default function Terminal() {
     const scope = m ? m[1].toLowerCase() : null;
     const query = m ? m[2].trim() : raw;
 
-    if (!query) return posts;
+    if (!query) {
+      return [...posts].sort((a, b) => {
+        const aUpdated =
+          a.lastModified && a.lastModified.trim() ? a.lastModified : a.date;
+        const bUpdated =
+          b.lastModified && b.lastModified.trim() ? b.lastModified : b.date;
+        return bUpdated > aUpdated ? 1 : bUpdated < aUpdated ? -1 : 0;
+      });
+    }
 
     return [...posts]
       .map((post) => {
@@ -412,7 +420,19 @@ export default function Terminal() {
           contentIdx: number[];
         } => !!r,
       )
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const aUpdated =
+          a.post.lastModified && a.post.lastModified.trim()
+            ? a.post.lastModified
+            : a.post.date;
+        const bUpdated =
+          b.post.lastModified && b.post.lastModified.trim()
+            ? b.post.lastModified
+            : b.post.date;
+        if (aUpdated === bUpdated) return 0;
+        return bUpdated > aUpdated ? 1 : -1;
+      })
       .map((r) => {
         matchById.set(r.post.id, {
           title: r.titleIdx,
@@ -595,7 +615,7 @@ export default function Terminal() {
           <span className="text-primary-foreground/70">›</span>
           <span>
             {currentView === "list" && "Posts"}
-            {currentView === "post" && `Post ${(selectedPost ?? 0) + 1}`}
+            {currentView === "post" && filteredPosts.length > 0 &&`${filteredPosts[selectedPost ?? 0].title}`}
             {currentView === "help" && "Help"}
           </span>
         </div>
@@ -613,7 +633,7 @@ export default function Terminal() {
           <div className="h-full flex flex-col">
             <div ref={tableRowsRef} className="flex-1 overflow-y-auto">
               {!loadingPosts && filteredPosts.length === 0 && (
-                <div className="px-4 py-3 text-sm text-muted-foreground">
+                <div className="px-6 py-3 text-sm text-muted-foreground">
                   No posts found
                 </div>
               )}
@@ -621,22 +641,13 @@ export default function Terminal() {
                 <div
                   key={post.id}
                   ref={idx === selectedIndex ? selectedRowRef : null}
-                  className={`px-4 py-3 border-b border-border/50 ${
+                  className={`px-6 py-3 border-b border-border/50 ${
                     idx === selectedIndex
                       ? "bg-accent text-accent-foreground"
                       : "hover:bg-secondary/50"
                   }`}
                 >
                   <div className="flex gap-4">
-                    <div
-                      className={
-                        idx === selectedIndex
-                          ? "w-12 shrink-0 text-accent-foreground"
-                          : "w-12 shrink-0 text-muted-foreground"
-                      }
-                    >
-                      {post.id}
-                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="truncate font-bold">
                         {renderHighlighted(
