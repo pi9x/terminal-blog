@@ -649,7 +649,9 @@ export default function Terminal() {
           <span className="text-primary-foreground/70">›</span>
           <span>
             {currentView === "list" && "Posts"}
-            {currentView === "post" && filteredPosts.length > 0 && `${filteredPosts[selectedPost ?? 0].title}`}
+            {currentView === "post" &&
+              filteredPosts.length > 0 &&
+              `${filteredPosts[selectedPost ?? 0].title}`}
             {currentView === "help" && "Help"}
           </span>
         </div>
@@ -675,7 +677,22 @@ export default function Terminal() {
                 <div
                   key={post.id}
                   ref={idx === selectedIndex ? selectedRowRef : null}
-                  className={`px-6 py-3 border-b border-border/50 ${
+                  role="button"
+                  aria-selected={idx === selectedIndex}
+                  tabIndex={0}
+                  onClick={() => {
+                    if (selectedIndex !== idx) {
+                      setSelectedIndex(idx);
+                    } else {
+                      const id = post.id;
+                      const idxInAll = posts.findIndex((p) => p.id === id);
+                      if (idxInAll >= 0) {
+                        setSelectedPost(idxInAll);
+                        setCurrentView("post");
+                      }
+                    }
+                  }}
+                  className={`px-6 py-3 border-b border-border/50 cursor-pointer ${
                     idx === selectedIndex
                       ? "bg-accent text-accent-foreground"
                       : "hover:bg-secondary/50"
